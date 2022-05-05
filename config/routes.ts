@@ -55,25 +55,25 @@
     routes: [
       {
         path: '/user_permission/usermanage',
-        name: '用户管理',
+        name: 'userAdmin',
         icon: 'smile',
         component: './UserManage/Users',
       },
       {
         path: '/user_permission/rolemanage',
-        name: '角色管理',
+        name: 'roleAdmin',
         icon: 'smile',
         component: './UserManage/Roles',
       },
       {
         path: '/user_permission/rolepermission',
-        name: '权限管理',
+        name: 'permissions',
         icon: 'smile',
         component: './UserManage/Permissions',
       },
       {
         path: '/user_permission/testpage',
-        name: '测试页',
+        name: 'testPage',
         icon: 'smile',
         component: './UserManage',
       },
