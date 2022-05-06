@@ -26,6 +26,7 @@ export async function login(body: API.LoginParams, options?: { [key: string]: an
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
     },
     data: body,
     ...(options || {}),

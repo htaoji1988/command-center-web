@@ -10,8 +10,23 @@ import ProDescriptions, {ProDescriptionsItemProps} from "@ant-design/pro-descrip
 import React, {useRef, useState} from "react";
 import request from 'umi-request';
 
+type GithubIssueItem = {
+  url: string;
+  id: number;
+  number: number;
+  title: string;
+  labels: {
+    name: string;
+    color: string;
+  }[];
+  state: string;
+  comments: number;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string;
+};
 
-const columns: ProColumns<API.GithubIssueItem>[] = [
+const columns: ProColumns<GithubIssueItem>[] = [
   {
     dataIndex: 'index',
     valueType: 'indexBorder',
@@ -137,14 +152,14 @@ const Users: React.FC = () => {
   const actionRef = useRef<ActionType>();
   return (
     <PageContainer title={false}>
-      <ProTable<API.GithubIssueItem, API.PageParams>
+      <ProTable<GithubIssueItem, API.PageParams>
         columns={columns}
         actionRef={actionRef}
         cardBordered
         request={async (params = {}, sort, filter) => {
           console.log(sort, filter);
           return request<{
-            data: API.GithubIssueItem[];
+            data: GithubIssueItem[];
           }>('https://proapi.azurewebsites.net/github/issues', {
             params,
           });
