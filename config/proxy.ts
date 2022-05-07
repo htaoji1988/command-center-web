@@ -30,7 +30,7 @@ export default {
     '/api/': {
       target: 'http://127.0.0.1:9000', // 本地django服务器
       changeOrigin: true,
-      pathRewrite: { '^': '' },
+      pathRewrite: { '^/api': '' },
     },
   },
 };
