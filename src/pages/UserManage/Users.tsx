@@ -1,7 +1,7 @@
 import {FooterToolbar, PageContainer} from "@ant-design/pro-layout";
 import ProTable, {ActionType, ProColumns, TableDropdown} from "@ant-design/pro-table";
 import {Button, Drawer, Input, Space, Tag, Dropdown, Menu} from "antd";
-import { PlusOutlined, EllipsisOutlined } from '@ant-design/icons';
+import {PlusOutlined, EllipsisOutlined} from '@ant-design/icons';
 import {FormattedMessage, useIntl} from "umi";
 import {rule} from "@/services/ant-design-pro/api";
 import {ModalForm, ProFormText, ProFormTextArea} from "@ant-design/pro-form";
@@ -10,34 +10,46 @@ import ProDescriptions, {ProDescriptionsItemProps} from "@ant-design/pro-descrip
 import React, {useRef, useState} from "react";
 import request from 'umi-request';
 
-type GithubIssueItem = {
-  url: string;
+type User = {
   id: number;
-  number: number;
-  title: string;
-  labels: {
-    name: string;
-    color: string;
-  }[];
-  state: string;
-  comments: number;
-  created_at: string;
-  updated_at: string;
-  closed_at?: string;
+  username: string;
+  email: string;
+  is_active: boolean;
+  nickname?: string;
+  role__name: string;
+  last_login?: string;
 };
 
-const columns: ProColumns<GithubIssueItem>[] = [
+type role = {
+  text: string;
+  status?: string;
+};
+
+const getRoles = async () => {
+  return request<Record<string, role>>('/api/user/roles', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Access-Control-Allow-Origin': '*'
+    },
+    data: {},
+  });
+}
+let roles:Record<string, role> = await getRoles();
+console.log(roles);
+
+
+const columns: ProColumns<User>[] = [
   {
-    dataIndex: 'index',
-    valueType: 'indexBorder',
-    width: 48,
+    title: 'ID',
+    dataIndex: 'id',
+    width: 50,
+    hideInSearch: true,
   },
   {
-    title: '标题',
-    dataIndex: 'title',
-    copyable: true,
-    ellipsis: true,
-    tip: '标题过长会自动收缩',
+    title: '用户名',
+    dataIndex: 'username',
+    ellipsis: true, // 过长收缩
     formItemProps: {
       rules: [
         {
@@ -48,68 +60,57 @@ const columns: ProColumns<GithubIssueItem>[] = [
     },
   },
   {
-    disable: true,
-    title: '状态',
-    dataIndex: 'state',
-    filters: true,
-    onFilter: true,
-    valueType: 'select',
-    valueEnum: {
-      all: {text: '全部', status: 'Default'},
-      open: {
-        text: '未解决',
-        status: 'Error',
-      },
-      closed: {
-        text: '已解决',
-        status: 'Success',
-        disabled: true,
-      },
-      processing: {
-        text: '解决中',
-        status: 'Processing',
-      },
-    },
+    title: '姓名',
+    dataIndex: 'nickname',
+    ellipsis: true, // 过长收缩
   },
   {
-    disable: true,
-    title: '标签',
-    dataIndex: 'labels',
-    search: false,
+    title: 'E-mail',
+    dataIndex: 'email',
+    ellipsis: true, // 过长收缩
+    hideInSearch: true,
+    width: 180,
+  },
+  {
+    title: '状态',
+    dataIndex: 'is_active',
+    hideInSearch: true,
     renderFormItem: (_, {defaultRender}) => {
       return defaultRender(_);
     },
     render: (_, record) => (
-      <Space>
-        {record.labels.map(({name, color}) => (
-          <Tag color={color} key={name}>
-            {name}
-          </Tag>
-        ))}
-      </Space>
+      record.is_active ? <Tag color={'green'} key={'启用'}>启用</Tag> : <Tag color={'red'} key={'停用'}>停用</Tag>
     ),
   },
   {
-    title: '创建时间',
-    key: 'showTime',
-    dataIndex: 'created_at',
-    valueType: 'dateTime',
-    sorter: true,
-    hideInSearch: true,
+    title: '角色',
+    dataIndex: 'role__name',
+    ellipsis: true, // 过长收缩
+    initialValue: 'all',
+    hideInForm: true,
+    // valueEnum: {
+    //   all: {text: '全部', status: 'Default'},
+    //   open: {
+    //     text: '未解决',
+    //     status: 'Error',
+    //   },
+    //   closed: {
+    //     text: '已解决',
+    //     status: 'Success',
+    //     disabled: true,
+    //   },
+    //   processing: {
+    //     text: '解决中',
+    //     status: 'Processing',
+    //   },
+    // },
+    valueEnum: {"all":{text:"全部"},...roles},
   },
   {
-    title: '创建时间',
-    dataIndex: 'created_at',
-    valueType: 'dateRange',
-    hideInTable: true,
-    search: {
-      transform: (value) => {
-        return {
-          startTime: value[0],
-          endTime: value[1],
-        };
-      },
-    },
+    title: '最后登录',
+    dataIndex: 'last_login',
+    valueType: 'dateTime',
+    hideInSearch: true,
   },
   {
     title: '操作',
@@ -123,9 +124,6 @@ const columns: ProColumns<GithubIssueItem>[] = [
         }}
       >
         编辑
-      </a>,
-      <a href={record.url} target="_blank" rel="noopener noreferrer" key="view">
-        查看
       </a>,
       <TableDropdown
         key="actionGroup"
@@ -152,16 +150,19 @@ const Users: React.FC = () => {
   const actionRef = useRef<ActionType>();
   return (
     <PageContainer title={false}>
-      <ProTable<GithubIssueItem, API.PageParams>
+      <ProTable<User, API.PageParams>
         columns={columns}
         actionRef={actionRef}
         cardBordered
         request={async (params = {}, sort, filter) => {
           console.log(sort, filter);
-          return request<{
-            data: GithubIssueItem[];
-          }>('https://proapi.azurewebsites.net/github/issues', {
-            params,
+          return request<{ data: User[]; }>('/api/user/userinfo', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Access-Control-Allow-Origin': '*'
+            },
+            data: params,
           });
         }}
         editable={{
@@ -197,12 +198,12 @@ const Users: React.FC = () => {
         dateFormatter="string"
         headerTitle="用户表格"
         toolBarRender={() => [
-          <Button key="button" icon={<PlusOutlined />} type="primary">
+          <Button key="button" icon={<PlusOutlined/>} type="primary">
             新建
           </Button>,
-          <Dropdown key="menu" overlay={menu} >
+          <Dropdown key="menu" overlay={menu}>
             <Button>
-              <EllipsisOutlined />
+              <EllipsisOutlined/>
             </Button>
           </Dropdown>,
         ]}
