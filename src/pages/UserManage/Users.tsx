@@ -1,7 +1,8 @@
 import {FooterToolbar, PageContainer} from "@ant-design/pro-layout";
 import ProTable, {ActionType, ProColumns, TableDropdown} from "@ant-design/pro-table";
-import {Button, Drawer, Input, Space, Tag, Dropdown, Menu} from "antd";
-import {PlusOutlined, EllipsisOutlined} from '@ant-design/icons';
+import {Button, Input, Dropdown, Menu, Tooltip, Popconfirm, Modal, Form, InputNumber, Layout} from "antd";
+import {Alert} from "antd";
+import {PlusOutlined, EllipsisOutlined, FormOutlined, DeleteOutlined} from '@ant-design/icons';
 import {FormattedMessage, useIntl} from "umi";
 import {rule} from "@/services/ant-design-pro/api";
 import {ModalForm, ProFormText, ProFormTextArea} from "@ant-design/pro-form";
@@ -35,7 +36,7 @@ const getRoles = async () => {
     data: {},
   });
 }
-let roles:Record<string, role> = await getRoles();
+let roles: Record<string, role> = await getRoles();
 console.log(roles);
 
 
@@ -69,18 +70,24 @@ const columns: ProColumns<User>[] = [
     dataIndex: 'email',
     ellipsis: true, // 过长收缩
     hideInSearch: true,
-    width: 180,
+    width: 200,
   },
   {
     title: '状态',
     dataIndex: 'is_active',
-    hideInSearch: true,
-    renderFormItem: (_, {defaultRender}) => {
-      return defaultRender(_);
+    // hideInSearch: true,
+    // renderFormItem: (_, {defaultRender}) => {
+    //   return defaultRender(_);
+    // },
+    // render: (_, record) => (
+    //   record.is_active ? <Tag color={'green'} key={'启用'}>启用</Tag> : <Tag color={'red'} key={'停用'}>停用</Tag>
+    // ),
+    initialValue: 'true',
+    valueEnum: {
+      all: {text: '全部'},
+      true: {text: '启用', status: 'Success'},
+      false: {text: '停用', status: 'Error'},
     },
-    render: (_, record) => (
-      record.is_active ? <Tag color={'green'} key={'启用'}>启用</Tag> : <Tag color={'red'} key={'停用'}>停用</Tag>
-    ),
   },
   {
     title: '角色',
@@ -104,36 +111,37 @@ const columns: ProColumns<User>[] = [
     //     status: 'Processing',
     //   },
     // },
-    valueEnum: {"all":{text:"全部"},...roles},
+    valueEnum: {"all": {text: "全部"}, ...roles},
   },
   {
     title: '最后登录',
     dataIndex: 'last_login',
     valueType: 'dateTime',
     hideInSearch: true,
+    width: 200,
   },
   {
     title: '操作',
     valueType: 'option',
     key: 'option',
-    render: (text, record, _, action) => [
-      <a
-        key="editable"
-        onClick={() => {
-          action?.startEditable?.(record.id);
-        }}
-      >
-        编辑
-      </a>,
-      <TableDropdown
-        key="actionGroup"
-        onSelect={() => action?.reload()}
-        menus={[
-          {key: 'copy', name: '复制'},
-          {key: 'delete', name: '删除'},
-        ]}
-      />,
-    ],
+    render: (text, record, _, action) => (
+      <>
+        <Tooltip title="编辑" key="cyan">
+          <Button type="link" size={'small'} icon={<FormOutlined/>}/>
+        </Tooltip>&nbsp;
+        <Tooltip title="删除" key="red">
+          <Popconfirm
+            title="确认删除这条信息吗?"
+            // onConfirm={() => deleteRow(record.id)}
+            // onCancel={() => cancelRrow(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="link" size={'small'} icon={<DeleteOutlined/>}/>
+          </Popconfirm>
+        </Tooltip>
+      </>
+    ),
   },
 ];
 
@@ -148,6 +156,75 @@ const menu = (
 
 const Users: React.FC = () => {
   const actionRef = useRef<ActionType>();
+  const layout = {
+    labelCol: {span: 5, offset: 1},
+    wrapperCol: {span: 14, offset: 0}
+  };
+
+  const [formId, setFormId] = useState('')
+  const [formUsername, setFormUsername] = useState('')
+  const [formPassword, setFormPassword] = useState('')
+  // const [formMail, setFormMail] = useState('')
+  // const [formNickname, setFormNickname] = useState('')
+  // const [formSex, setFormSex] = useState('')
+  // const [formRole, setFormRole] = useState('')
+  // const [formStatus, setFormStatus] = useState('')
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [confirmLoading, setConfirmLoading] = useState(false)
+  const [isEdit, setIsEdit] = useState(false)
+
+  const [form] = Form.useForm();
+  form.setFieldsValue({
+    id: formId,
+    username: formUsername,
+    password: formPassword,
+  })
+
+  const addModel = () => {
+    setIsEdit(false)
+    setIsModalVisible(true)
+  }
+
+  const addOK = async () => {
+    setConfirmLoading(true)
+    console.log("addinfo")
+    try {
+      const values = await form.validateFields();
+      console.log('Success:', values);
+      // axios.post('/accounts/add_memcache/', qs.stringify(values), {headers}).then(response => {
+      //   console.log(response.data.success)
+      //   setConfirmLoading(false)
+      //   response.data.success === "True" ? message.success('添加成功') : message.error('添加失败: ' + response.data.content)
+      //   setIsModalVisible(false)
+      // })
+    } catch (errorInfo) {
+      console.log('Failed:', errorInfo)
+      setConfirmLoading(false)
+      message.error('添加失败: ' + errorInfo)
+    }
+  }
+
+  const editOK = async () => {
+    setConfirmLoading(true)
+    console.log("editinfo")
+    // try {
+    //   const values = await form.validateFields();
+    //   console.log('Success:', values);
+    //   axios.post('/accounts/update_memcache/', qs.stringify(values), {headers}).then(response => {
+    //     console.log(response.data.success)
+    //     setConfirmLoading(false)
+    //     response.data.success === "True" ? message.success('编辑成功') : message.error('编辑失败: ' + response.data.content)
+    //     setIsModalVisible(false)
+    //   })
+    // } catch (errorInfo) {
+    //   console.log('Failed:', errorInfo)
+    //   setConfirmLoading(false)
+    //   message.error('编辑失败: ' + errorInfo)
+    // }
+  }
+
+  const handleCancel = () => setIsModalVisible(false)
+
   return (
     <PageContainer title={false}>
       <ProTable<User, API.PageParams>
@@ -198,7 +275,7 @@ const Users: React.FC = () => {
         dateFormatter="string"
         headerTitle="用户表格"
         toolBarRender={() => [
-          <Button key="button" icon={<PlusOutlined/>} type="primary">
+          <Button key="button" icon={<PlusOutlined/>} onClick={addModel} type="primary">
             新建
           </Button>,
           <Dropdown key="menu" overlay={menu}>
@@ -208,6 +285,34 @@ const Users: React.FC = () => {
           </Dropdown>,
         ]}
       />
+      <Modal title={isEdit ? "编辑用户信息" : "新增用户信息"} visible={isModalVisible} okText="确认" cancelText="取消"
+             onOk={isEdit ? editOK : addOK} confirmLoading={confirmLoading} onCancel={handleCancel}>
+        <Form {...layout} name="nest-messages" form={form}>
+          <Form.Item name='id' label="ID" hidden={!isEdit} initialValue={formId} rules={[]} wrapperCol={{span: 5}}>
+            <InputNumber readOnly={true}/>
+          </Form.Item>
+          <Form.Item name='username' label="用户名" initialValue={formUsername}
+                     rules={[
+                       {
+                         required: true,
+                         max: 255
+                       },
+                     ]}
+          >
+            <Input onChange={(e) => setFormUsername(e.target.value)}/>
+          </Form.Item>
+          <Form.Item name='password' label="密码" initialValue={formPassword}
+                     rules={[
+                       {
+                         required: true,
+                         max: 255
+                       },
+                     ]}
+          >
+            <Input.Password onChange={(e) => setFormPassword(e.target.value)}/>
+          </Form.Item>
+        </Form>
+      </Modal>
     </PageContainer>
   );
 };
