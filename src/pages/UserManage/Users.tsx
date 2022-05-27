@@ -1,6 +1,6 @@
 import {FooterToolbar, PageContainer} from "@ant-design/pro-layout";
 import ProTable, {ActionType, ProColumns, TableDropdown} from "@ant-design/pro-table";
-import {Button, Input, Dropdown, Menu, Tooltip, Popconfirm, Modal, Form, InputNumber, Layout} from "antd";
+import {Button, Input, Dropdown, Menu, Tooltip, Popconfirm, Modal, Form, InputNumber, Select, Layout, message} from "antd";
 import {Alert} from "antd";
 import {PlusOutlined, EllipsisOutlined, FormOutlined, DeleteOutlined} from '@ant-design/icons';
 import {FormattedMessage, useIntl} from "umi";
@@ -10,6 +10,12 @@ import UpdateForm from "@/pages/UserManage/components/UpdateForm";
 import ProDescriptions, {ProDescriptionsItemProps} from "@ant-design/pro-descriptions";
 import React, {useRef, useState} from "react";
 import request from 'umi-request';
+const { Option } = Select;
+
+message.config({  // 设置message通知的位置
+  top: 50,
+  rtl: false,
+})
 
 type User = {
   id: number;
@@ -37,7 +43,6 @@ const getRoles = async () => {
   });
 }
 let roles: Record<string, role> = await getRoles();
-console.log(roles);
 
 
 const columns: ProColumns<User>[] = [
@@ -167,7 +172,7 @@ const Users: React.FC = () => {
   // const [formMail, setFormMail] = useState('')
   // const [formNickname, setFormNickname] = useState('')
   // const [formSex, setFormSex] = useState('')
-  // const [formRole, setFormRole] = useState('')
+  const [formRole, setFormRole] = useState('')
   // const [formStatus, setFormStatus] = useState('')
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [confirmLoading, setConfirmLoading] = useState(false)
@@ -179,6 +184,16 @@ const Users: React.FC = () => {
     username: formUsername,
     password: formPassword,
   })
+
+  const select_roles = (roles: Record<string, role>): {label:string, value:string}[] => {
+    let res: {label:string, value:string}[] = [];
+    let k: string;
+    for(k in roles){
+      console.log(k);
+      res.push({label:k, value:k });
+    }
+    return res;
+  }
 
   const addModel = () => {
     setIsEdit(false)
@@ -198,9 +213,9 @@ const Users: React.FC = () => {
       //   setIsModalVisible(false)
       // })
     } catch (errorInfo) {
-      console.log('Failed:', errorInfo)
-      setConfirmLoading(false)
-      message.error('添加失败: ' + errorInfo)
+      console.log('Failed:', errorInfo);
+      setConfirmLoading(false);
+      message.error('添加失败: ' + errorInfo);
     }
   }
 
@@ -310,6 +325,13 @@ const Users: React.FC = () => {
                      ]}
           >
             <Input.Password onChange={(e) => setFormPassword(e.target.value)}/>
+          </Form.Item>
+          <Form.Item name='role' label="角色" initialValue={formRole}
+                     rules={[]}
+          >
+            <Select defaultValue="" style={{ width: 120 }} onChange={(e) => setFormRole(e)}
+                    options = {select_roles(roles)}>
+            </Select>
           </Form.Item>
         </Form>
       </Modal>
