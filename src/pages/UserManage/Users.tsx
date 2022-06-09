@@ -1,6 +1,19 @@
 import {FooterToolbar, PageContainer} from "@ant-design/pro-layout";
 import ProTable, {ActionType, ProColumns, TableDropdown} from "@ant-design/pro-table";
-import {Button, Input, Dropdown, Menu, Tooltip, Popconfirm, Modal, Form, InputNumber, Select, Layout, message} from "antd";
+import {
+  Button,
+  Input,
+  Dropdown,
+  Menu,
+  Tooltip,
+  Popconfirm,
+  Modal,
+  Form,
+  InputNumber,
+  Select,
+  Layout,
+  message
+} from "antd";
 import {Alert} from "antd";
 import {PlusOutlined, EllipsisOutlined, FormOutlined, DeleteOutlined} from '@ant-design/icons';
 import {FormattedMessage, useIntl} from "umi";
@@ -10,7 +23,11 @@ import UpdateForm from "@/pages/UserManage/components/UpdateForm";
 import ProDescriptions, {ProDescriptionsItemProps} from "@ant-design/pro-descriptions";
 import React, {useRef, useState} from "react";
 import request from 'umi-request';
-const { Option } = Select;
+
+const {Option} = Select;
+
+// django 默认用x-www-form-urlencoded格式接受http数据
+const headers = {"Content-Type": 'application/x-www-form-urlencoded','Access-Control-Allow-Origin': '*'}
 
 message.config({  // 设置message通知的位置
   top: 50,
@@ -169,11 +186,10 @@ const Users: React.FC = () => {
   const [formId, setFormId] = useState('')
   const [formUsername, setFormUsername] = useState('')
   const [formPassword, setFormPassword] = useState('')
-  // const [formMail, setFormMail] = useState('')
-  // const [formNickname, setFormNickname] = useState('')
-  // const [formSex, setFormSex] = useState('')
+  const [formMail, setFormMail] = useState('')
+  const [formNickname, setFormNickname] = useState('')
   const [formRole, setFormRole] = useState('')
-  // const [formStatus, setFormStatus] = useState('')
+  const [formStatus, setFormStatus] = useState('启用')
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [confirmLoading, setConfirmLoading] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
@@ -183,21 +199,28 @@ const Users: React.FC = () => {
     id: formId,
     username: formUsername,
     password: formPassword,
+    mail: formMail,
+    nickname: formNickname,
+    role: formRole,
+    status: formStatus
   })
 
-  const select_roles = (roles: Record<string, role>): {label:string, value:string}[] => {
-    let res: {label:string, value:string}[] = [];
+  const select_roles = (roles: Record<string, role>): { label: string, value: string }[] => {
+    let res: { label: string, value: string }[] = [];
     let k: string;
-    for(k in roles){
-      console.log(k);
-      res.push({label:k, value:k });
+    for (k in roles) {
+      res.push({label: k, value: k});
     }
     return res;
   }
 
   const addModel = () => {
-    setIsEdit(false)
-    setIsModalVisible(true)
+    console.log("add model");
+    form.setFieldsValue({
+      nickname: "aaaaa"
+    })
+    setIsEdit(false);
+    setIsModalVisible(true);
   }
 
   const addOK = async () => {
@@ -206,12 +229,14 @@ const Users: React.FC = () => {
     try {
       const values = await form.validateFields();
       console.log('Success:', values);
-      // axios.post('/accounts/add_memcache/', qs.stringify(values), {headers}).then(response => {
-      //   console.log(response.data.success)
-      //   setConfirmLoading(false)
-      //   response.data.success === "True" ? message.success('添加成功') : message.error('添加失败: ' + response.data.content)
-      //   setIsModalVisible(false)
-      // })
+      request.post('/api/user/adduser', {
+        header: {headers},
+        data: await form.validateFields(),
+      }).then(function (response) {
+        console.log(response);
+      }).catch(function (error) {
+        console.log(error);
+      });
     } catch (errorInfo) {
       console.log('Failed:', errorInfo);
       setConfirmLoading(false);
@@ -250,10 +275,7 @@ const Users: React.FC = () => {
           console.log(sort, filter);
           return request<{ data: User[]; }>('/api/user/userinfo', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'Access-Control-Allow-Origin': '*'
-            },
+            headers: {headers},
             data: params,
           });
         }}
@@ -306,31 +328,27 @@ const Users: React.FC = () => {
           <Form.Item name='id' label="ID" hidden={!isEdit} initialValue={formId} rules={[]} wrapperCol={{span: 5}}>
             <InputNumber readOnly={true}/>
           </Form.Item>
-          <Form.Item name='username' label="用户名" initialValue={formUsername}
-                     rules={[
-                       {
-                         required: true,
-                         max: 255
-                       },
-                     ]}
-          >
+          <Form.Item name='username' label="用户名" rules={[{required: true, max: 255},]}>
             <Input onChange={(e) => setFormUsername(e.target.value)}/>
           </Form.Item>
-          <Form.Item name='password' label="密码" initialValue={formPassword}
-                     rules={[
-                       {
-                         required: true,
-                         max: 255
-                       },
-                     ]}
-          >
+          <Form.Item name='password' label="密码" rules={[{required: true, max: 255},]}>
             <Input.Password onChange={(e) => setFormPassword(e.target.value)}/>
           </Form.Item>
-          <Form.Item name='role' label="角色" initialValue={formRole}
-                     rules={[]}
-          >
-            <Select defaultValue="" style={{ width: 120 }} onChange={(e) => setFormRole(e)}
-                    options = {select_roles(roles)}>
+          <Form.Item name='nickname' label="姓名(昵称)" rules={[{max: 255},]}>
+            <Input onChange={(e) => setFormNickname(e.target.value)}/>
+          </Form.Item>
+          <Form.Item name='mail' label="邮箱" rules={[{type: 'email', max: 255},]}>
+            <Input onChange={(e) => setFormMail(e.target.value)}/>
+          </Form.Item>
+          <Form.Item name='role' label="角色" rules={[]}>
+            <Select defaultValue="" onChange={(e) => setFormRole(e)}
+                    options={select_roles(roles)}>
+            </Select>
+          </Form.Item>
+          <Form.Item name='isactive' label="状态" rules={[]}>
+            <Select onChange={(e) => setFormStatus(e)}>
+              <Option value="启用">启用</Option>
+              <Option value="停用">停用</Option>
             </Select>
           </Form.Item>
         </Form>
