@@ -1,20 +1,7 @@
 import {FooterToolbar, PageContainer} from "@ant-design/pro-layout";
 import ProTable, {ActionType, ProColumns, TableDropdown} from "@ant-design/pro-table";
-import {
-  Button,
-  Input,
-  Dropdown,
-  Menu,
-  Tooltip,
-  Popconfirm,
-  Modal,
-  Form,
-  InputNumber,
-  Select,
-  Layout,
-  message
-} from "antd";
-import {Alert} from "antd";
+import {Button, Input, Dropdown, Menu, Tooltip, Popconfirm, Modal, Form, InputNumber, Select, message} from "antd";
+import {Alert, Layout} from "antd";
 import {PlusOutlined, EllipsisOutlined, FormOutlined, DeleteOutlined} from '@ant-design/icons';
 import {FormattedMessage, useIntl} from "umi";
 import {rule} from "@/services/ant-design-pro/api";
@@ -23,11 +10,13 @@ import UpdateForm from "@/pages/UserManage/components/UpdateForm";
 import ProDescriptions, {ProDescriptionsItemProps} from "@ant-design/pro-descriptions";
 import React, {useRef, useState} from "react";
 import request from 'umi-request';
+import axios from 'axios'
+import qs from 'qs'
 
 const {Option} = Select;
 
 // django 默认用x-www-form-urlencoded格式接受http数据
-const headers = {"Content-Type": 'application/x-www-form-urlencoded','Access-Control-Allow-Origin': '*'}
+const headers = {"Content-Type": 'application/x-www-form-urlencoded', 'Access-Control-Allow-Origin': '*'}
 
 message.config({  // 设置message通知的位置
   top: 50,
@@ -59,8 +48,30 @@ const getRoles = async () => {
     data: {},
   });
 }
-let roles: Record<string, role> = await getRoles();
+const roles: Record<string, role> = await getRoles();
 
+const deleteRow = (id: number, action: ActionType) => {
+  console.log(id)
+
+  request.post('/api/user/del_user', {
+    header: {headers}, data: {id: id},
+  }).then(function (res) {
+    console.log(res);
+    if (res.success === 'True') {
+      message.success('操作成功')
+      action.reload()
+      // reloadTable(pageOption.page_no, pageOption.page_size)
+    } else {
+      message.error('操作失败')
+    }
+  }).catch(function (error) {
+    console.log(error);
+  });
+}
+
+const cancelRrow = (id: number) => {
+  console.log("cancel" + id)
+}
 
 const columns: ProColumns<User>[] = [
   {
@@ -154,8 +165,8 @@ const columns: ProColumns<User>[] = [
         <Tooltip title="删除" key="red">
           <Popconfirm
             title="确认删除这条信息吗?"
-            // onConfirm={() => deleteRow(record.id)}
-            // onCancel={() => cancelRrow(record.id)}
+            onConfirm={() => deleteRow(record.id, action)}
+            onCancel={() => cancelRrow(record.id)}
             okText="Yes"
             cancelText="No"
           >
@@ -206,7 +217,7 @@ const Users: React.FC = () => {
   })
 
   const select_roles = (roles: Record<string, role>): { label: string, value: string }[] => {
-    let res: { label: string, value: string }[] = [];
+    const res: { label: string, value: string }[] = [];
     let k: string;
     for (k in roles) {
       res.push({label: k, value: k});
@@ -223,25 +234,27 @@ const Users: React.FC = () => {
     setIsModalVisible(true);
   }
 
-  const addOK = async () => {
+  const addOK = async (actionRef) => {
     setConfirmLoading(true)
     console.log("addinfo")
-    try {
-      const values = await form.validateFields();
-      console.log('Success:', values);
-      request.post('/api/user/adduser', {
-        header: {headers},
-        data: await form.validateFields(),
-      }).then(function (response) {
-        console.log(response);
-      }).catch(function (error) {
-        console.log(error);
-      });
-    } catch (errorInfo) {
-      console.log('Failed:', errorInfo);
-      setConfirmLoading(false);
-      message.error('添加失败: ' + errorInfo);
-    }
+    const values = await form.validateFields();
+    console.log('Success:', values);
+    request.post('/api/user/adduser', {
+      header: {headers},
+      data: await form.validateFields(),
+    }).then(function (res) {
+      if (res.success === 'True') {
+        message.success('添加成功')
+        actionRef.current.reload
+        // reloadTable(pageOption.page_no, pageOption.page_size)
+      } else {
+        message.error('添加失败: ' + res.log)
+      }
+    }).catch(function (error) {
+      message.error(error)
+    });
+    setConfirmLoading(false)
+    setIsModalVisible(false)
   }
 
   const editOK = async () => {
@@ -331,7 +344,7 @@ const Users: React.FC = () => {
           <Form.Item name='username' label="用户名" rules={[{required: true, max: 255},]}>
             <Input onChange={(e) => setFormUsername(e.target.value)}/>
           </Form.Item>
-          <Form.Item name='password' label="密码" rules={[{required: true, max: 255},]}>
+          <Form.Item name='password' label="密码" rules={[{required: true, min: 6, max: 32},]}>
             <Input.Password onChange={(e) => setFormPassword(e.target.value)}/>
           </Form.Item>
           <Form.Item name='nickname' label="姓名(昵称)" rules={[{max: 255},]}>
@@ -340,12 +353,12 @@ const Users: React.FC = () => {
           <Form.Item name='mail' label="邮箱" rules={[{type: 'email', max: 255},]}>
             <Input onChange={(e) => setFormMail(e.target.value)}/>
           </Form.Item>
-          <Form.Item name='role' label="角色" rules={[]}>
+          <Form.Item name='role' label="角色" rules={[{required: true},]}>
             <Select defaultValue="" onChange={(e) => setFormRole(e)}
                     options={select_roles(roles)}>
             </Select>
           </Form.Item>
-          <Form.Item name='isactive' label="状态" rules={[]}>
+          <Form.Item name='isactive' label="状态" rules={[{required: true},]}>
             <Select onChange={(e) => setFormStatus(e)}>
               <Option value="启用">启用</Option>
               <Option value="停用">停用</Option>
