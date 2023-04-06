@@ -234,7 +234,7 @@ const Users: React.FC = () => {
     setIsModalVisible(true);
   }
 
-  const addOK = async (actionRef) => {
+  const addOK = async () => {
     setConfirmLoading(true)
     console.log("addinfo")
     const values = await form.validateFields();
@@ -245,7 +245,7 @@ const Users: React.FC = () => {
     }).then(function (res) {
       if (res.success === 'True') {
         message.success('添加成功')
-        actionRef.current.reload
+        actionRef.current.reload()
         // reloadTable(pageOption.page_no, pageOption.page_size)
       } else {
         message.error('添加失败: ' + res.log)
