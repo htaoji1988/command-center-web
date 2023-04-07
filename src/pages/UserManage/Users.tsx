@@ -48,144 +48,17 @@ const getRoles = async () => {
     data: {},
   });
 }
+
 const roles: Record<string, role> = await getRoles();
 
-const deleteRow = (id: number, action: ActionType) => {
-  console.log(id)
-
-  request.post('/api/user/del_user', {
-    header: {headers}, data: {id: id},
-  }).then(function (res) {
-    console.log(res);
-    if (res.success === 'True') {
-      message.success('操作成功')
-      action.reload()
-      // reloadTable(pageOption.page_no, pageOption.page_size)
-    } else {
-      message.error('操作失败')
-    }
-  }).catch(function (error) {
-    console.log(error);
-  });
+const select_roles = (roles: Record<string, role>): { label: string, value: string }[] => {
+  const res: { label: string, value: string }[] = [];
+  let k: string;
+  for (k in roles) {
+    res.push({label: k, value: k});
+  }
+  return res;
 }
-
-const cancelRrow = (id: number) => {
-  console.log("cancel" + id)
-}
-
-const columns: ProColumns<User>[] = [
-  {
-    title: 'ID',
-    dataIndex: 'id',
-    width: 50,
-    hideInSearch: true,
-  },
-  {
-    title: '用户名',
-    dataIndex: 'username',
-    ellipsis: true, // 过长收缩
-    formItemProps: {
-      rules: [
-        {
-          required: true,
-          message: '此项为必填项',
-        },
-      ],
-    },
-  },
-  {
-    title: '姓名',
-    dataIndex: 'nickname',
-    ellipsis: true, // 过长收缩
-  },
-  {
-    title: 'E-mail',
-    dataIndex: 'email',
-    ellipsis: true, // 过长收缩
-    hideInSearch: true,
-    width: 200,
-  },
-  {
-    title: '状态',
-    dataIndex: 'is_active',
-    // hideInSearch: true,
-    // renderFormItem: (_, {defaultRender}) => {
-    //   return defaultRender(_);
-    // },
-    // render: (_, record) => (
-    //   record.is_active ? <Tag color={'green'} key={'启用'}>启用</Tag> : <Tag color={'red'} key={'停用'}>停用</Tag>
-    // ),
-    initialValue: 'true',
-    valueEnum: {
-      all: {text: '全部'},
-      true: {text: '启用', status: 'Success'},
-      false: {text: '停用', status: 'Error'},
-    },
-  },
-  {
-    title: '角色',
-    dataIndex: 'role__name',
-    ellipsis: true, // 过长收缩
-    initialValue: 'all',
-    hideInForm: true,
-    // valueEnum: {
-    //   all: {text: '全部', status: 'Default'},
-    //   open: {
-    //     text: '未解决',
-    //     status: 'Error',
-    //   },
-    //   closed: {
-    //     text: '已解决',
-    //     status: 'Success',
-    //     disabled: true,
-    //   },
-    //   processing: {
-    //     text: '解决中',
-    //     status: 'Processing',
-    //   },
-    // },
-    valueEnum: {"all": {text: "全部"}, ...roles},
-  },
-  {
-    title: '最后登录',
-    dataIndex: 'last_login',
-    valueType: 'dateTime',
-    hideInSearch: true,
-    width: 200,
-  },
-  {
-    title: '操作',
-    valueType: 'option',
-    key: 'option',
-    render: (text, record, _, action) => (
-      <>
-        <Tooltip title="编辑" key="cyan">
-          <Button type="link" size={'small'} icon={<FormOutlined/>}/>
-        </Tooltip>&nbsp;
-        <Tooltip title="删除" key="red">
-          <Popconfirm
-            title="确认删除这条信息吗?"
-            onConfirm={() => deleteRow(record.id, action)}
-            onCancel={() => cancelRrow(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button type="link" size={'small'} icon={<DeleteOutlined/>}/>
-          </Popconfirm>
-        </Tooltip>
-      </>
-    ),
-  },
-];
-
-const menu = (
-  <Menu>
-    <Menu.Item key="1">1st item</Menu.Item>
-    <Menu.Item key="2">2nd item</Menu.Item>
-    <Menu.Item key="3">3rd item</Menu.Item>
-  </Menu>
-);
-
 
 const Users: React.FC = () => {
   const actionRef = useRef<ActionType>();
@@ -216,15 +89,6 @@ const Users: React.FC = () => {
     status: formStatus
   })
 
-  const select_roles = (roles: Record<string, role>): { label: string, value: string }[] => {
-    const res: { label: string, value: string }[] = [];
-    let k: string;
-    for (k in roles) {
-      res.push({label: k, value: k});
-    }
-    return res;
-  }
-
   const addModel = () => {
     console.log("add model");
     form.setFieldsValue({
@@ -237,9 +101,13 @@ const Users: React.FC = () => {
   const addOK = async () => {
     setConfirmLoading(true)
     console.log("addinfo")
+    form.setFieldsValue({
+      username:"",
+
+    })
     const values = await form.validateFields();
     console.log('Success:', values);
-    request.post('/api/user/adduser', {
+    request.post('/api/user/add_user', {
       header: {headers},
       data: await form.validateFields(),
     }).then(function (res) {
@@ -275,6 +143,160 @@ const Users: React.FC = () => {
     //   message.error('编辑失败: ' + errorInfo)
     // }
   }
+
+  const deleteRow = (id: number, action: ActionType) => {
+    console.log(id)
+
+    request.post('/api/user/del_user', {
+      header: {headers}, data: {id: id},
+    }).then(function (res) {
+      console.log(res);
+      if (res.success === 'True') {
+        message.success('操作成功')
+        action.reload()
+        // reloadTable(pageOption.page_no, pageOption.page_size)
+      } else {
+        message.error('操作失败')
+      }
+    }).catch(function (error) {
+      console.log(error);
+    });
+  }
+
+  const editRow = (record) => {
+    console.log(record)
+    setIsEdit(true)
+    setIsModalVisible(true)
+    setFormId(record.id)
+    setFormUsername(record.username)
+    setFormPassword("")
+    setFormMail(record.email)
+    setFormNickname(record.nickname)
+    setFormRole(record.role__name)
+    if (record.is_active === true) {
+      setFormStatus("Success")
+    } else {
+      setFormStatus("Error")
+    }
+  }
+
+  const cancelRrow = (id: number) => {
+    console.log("cancel" + id)
+  }
+
+  const columns: ProColumns<User>[] = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+      width: 50,
+      hideInSearch: true,
+    },
+    {
+      title: '用户名',
+      dataIndex: 'username',
+      ellipsis: true, // 过长收缩
+      formItemProps: {
+        rules: [
+          {
+            required: true,
+            message: '此项为必填项',
+          },
+        ],
+      },
+    },
+    {
+      title: '姓名',
+      dataIndex: 'nickname',
+      ellipsis: true, // 过长收缩
+    },
+    {
+      title: 'E-mail',
+      dataIndex: 'email',
+      ellipsis: true, // 过长收缩
+      hideInSearch: true,
+      width: 200,
+    },
+    {
+      title: '状态',
+      dataIndex: 'is_active',
+      // hideInSearch: true,
+      // renderFormItem: (_, {defaultRender}) => {
+      //   return defaultRender(_);
+      // },
+      // render: (_, record) => (
+      //   record.is_active ? <Tag color={'green'} key={'启用'}>启用</Tag> : <Tag color={'red'} key={'停用'}>停用</Tag>
+      // ),
+      initialValue: 'true',
+      valueEnum: {
+        all: {text: '全部'},
+        true: {text: '启用', status: 'Success'},
+        false: {text: '停用', status: 'Error'},
+      },
+    },
+    {
+      title: '角色',
+      dataIndex: 'role__name',
+      ellipsis: true, // 过长收缩
+      initialValue: 'all',
+      hideInForm: true,
+      // valueEnum: {
+      //   all: {text: '全部', status: 'Default'},
+      //   open: {
+      //     text: '未解决',
+      //     status: 'Error',
+      //   },
+      //   closed: {
+      //     text: '已解决',
+      //     status: 'Success',
+      //     disabled: true,
+      //   },
+      //   processing: {
+      //     text: '解决中',
+      //     status: 'Processing',
+      //   },
+      // },
+      valueEnum: {"all": {text: "全部"}, ...roles},
+    },
+    {
+      title: '最后登录',
+      dataIndex: 'last_login',
+      valueType: 'dateTime',
+      hideInSearch: true,
+      width: 200,
+    },
+    {
+      title: '操作',
+      valueType: 'option',
+      key: 'option',
+      render: (text, record, _, action) => (
+        <>
+          <Tooltip title="编辑" key="cyan">
+            <Button type="link" size={'small'} icon={<FormOutlined/>} onClick={() => editRow(record, action)}/>
+          </Tooltip>&nbsp;
+          <Tooltip title="删除" key="red">
+            <Popconfirm
+              title="确认删除这条信息吗?"
+              onConfirm={() => deleteRow(record.id, action)}
+              onCancel={() => cancelRrow(record.id)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button type="link" size={'small'} icon={<DeleteOutlined/>}/>
+            </Popconfirm>
+          </Tooltip>
+        </>
+      ),
+    },
+  ];
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="1">1st item</Menu.Item>
+      <Menu.Item key="2">2nd item</Menu.Item>
+      <Menu.Item key="3">3rd item</Menu.Item>
+    </Menu>
+  );
+
 
   const handleCancel = () => setIsModalVisible(false)
 
@@ -344,8 +366,9 @@ const Users: React.FC = () => {
           <Form.Item name='username' label="用户名" rules={[{required: true, max: 255},]}>
             <Input onChange={(e) => setFormUsername(e.target.value)}/>
           </Form.Item>
-          <Form.Item name='password' label="密码" rules={[{required: true, min: 6, max: 32},]}>
-            <Input.Password onChange={(e) => setFormPassword(e.target.value)}/>
+          <Form.Item name='password' label="密码" rules={[{required: !isEdit, min: 6, max: 32},]}>
+            <Input.Password onChange={(e) => setFormPassword(e.target.value)}
+                            placeholder={isEdit ? '如果不输入密码则保持原密码' : ''}/>
           </Form.Item>
           <Form.Item name='nickname' label="姓名(昵称)" rules={[{max: 255},]}>
             <Input onChange={(e) => setFormNickname(e.target.value)}/>
