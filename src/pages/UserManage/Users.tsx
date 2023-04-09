@@ -83,7 +83,7 @@ const Users: React.FC = () => {
     id: formId,
     username: formUsername,
     password: formPassword,
-    mail: formMail,
+    email: formMail,
     nickname: formNickname,
     role: formRole,
     status: formStatus
@@ -101,10 +101,6 @@ const Users: React.FC = () => {
   const addOK = async () => {
     setConfirmLoading(true)
     console.log("addinfo")
-    form.setFieldsValue({
-      username:"",
-
-    })
     const values = await form.validateFields();
     console.log('Success:', values);
     request.post('/api/user/add_user', {
@@ -120,7 +116,7 @@ const Users: React.FC = () => {
       }
     }).catch(function (error) {
       message.error(error)
-    });
+    })
     setConfirmLoading(false)
     setIsModalVisible(false)
   }
@@ -128,29 +124,32 @@ const Users: React.FC = () => {
   const editOK = async () => {
     setConfirmLoading(true)
     console.log("editinfo")
-    // try {
-    //   const values = await form.validateFields();
-    //   console.log('Success:', values);
-    //   axios.post('/accounts/update_memcache/', qs.stringify(values), {headers}).then(response => {
-    //     console.log(response.data.success)
-    //     setConfirmLoading(false)
-    //     response.data.success === "True" ? message.success('编辑成功') : message.error('编辑失败: ' + response.data.content)
-    //     setIsModalVisible(false)
-    //   })
-    // } catch (errorInfo) {
-    //   console.log('Failed:', errorInfo)
-    //   setConfirmLoading(false)
-    //   message.error('编辑失败: ' + errorInfo)
-    // }
+    const values = await form.validateFields()
+    console.log('Success:', values)
+    request.post('/api/user/update_user', {
+      header: {headers},
+      data: await form.validateFields(),
+    }).then(function (res) {
+      if (res.success === 'True') {
+        message.success('编辑成功')
+        actionRef.current.reload()
+        // reloadTable(pageOption.page_no, pageOption.page_size)
+      } else {
+        message.error('编辑失败: ' + res.log)
+      }
+    }).catch(function (error) {
+      message.error(error)
+    })
+    setConfirmLoading(false)
+    setIsModalVisible(false)
   }
 
   const deleteRow = (id: number, action: ActionType) => {
     console.log(id)
-
     request.post('/api/user/del_user', {
       header: {headers}, data: {id: id},
     }).then(function (res) {
-      console.log(res);
+      console.log(res)
       if (res.success === 'True') {
         message.success('操作成功')
         action.reload()
@@ -159,7 +158,7 @@ const Users: React.FC = () => {
         message.error('操作失败')
       }
     }).catch(function (error) {
-      console.log(error);
+      console.log(error)
     });
   }
 
@@ -173,10 +172,10 @@ const Users: React.FC = () => {
     setFormMail(record.email)
     setFormNickname(record.nickname)
     setFormRole(record.role__name)
-    if (record.is_active === true) {
-      setFormStatus("Success")
+    if (record.is_active) {
+      setFormStatus("启用")
     } else {
-      setFormStatus("Error")
+      setFormStatus("停用")
     }
   }
 
@@ -307,7 +306,7 @@ const Users: React.FC = () => {
         actionRef={actionRef}
         cardBordered
         request={async (params = {}, sort, filter) => {
-          console.log(sort, filter);
+          console.log(sort, filter)
           return request<{ data: User[]; }>('/api/user/userinfo', {
             method: 'POST',
             headers: {headers},
@@ -381,7 +380,7 @@ const Users: React.FC = () => {
                     options={select_roles(roles)}>
             </Select>
           </Form.Item>
-          <Form.Item name='isactive' label="状态" rules={[{required: true},]}>
+          <Form.Item name='status' label="状态" rules={[{required: true},]}>
             <Select onChange={(e) => setFormStatus(e)}>
               <Option value="启用">启用</Option>
               <Option value="停用">停用</Option>

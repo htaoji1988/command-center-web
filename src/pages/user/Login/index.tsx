@@ -66,6 +66,7 @@ const Login: React.FC = () => {
         history.push(redirect || '/');
         return;
       }
+      message.error('登录失败, 请检查账号密码!!!');
       console.log(msg);
       // 如果失败去设置用户错误信息
       setUserLoginState(msg);
