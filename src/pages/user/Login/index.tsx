@@ -53,6 +53,10 @@ const Login: React.FC = () => {
       // 登录
       const msg = await login({ ...values, type });
       if (msg.status === 'ok') {
+        if(localStorage.getItem('token')==null||localStorage.getItem('token')==undefined){
+          localStorage.setItem('token','');
+        }
+        localStorage.setItem('token', msg.token);
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
           defaultMessage: '登录成功！',
@@ -67,7 +71,6 @@ const Login: React.FC = () => {
         return;
       }
       message.error('登录失败, 请检查账号密码!!!');
-      console.log(msg);
       // 如果失败去设置用户错误信息
       setUserLoginState(msg);
     } catch (error) {
