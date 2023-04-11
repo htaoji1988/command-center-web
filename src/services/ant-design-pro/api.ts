@@ -17,7 +17,7 @@ export async function outLogin(options?: { [key: string]: any }) {
   return request<Record<string, any>>('/api/login/outLogin', {
     method: 'POST',
     ...(options || {}),
-  });
+  }).then(localStorage.setItem('token', ' '))
 }
 
 /** 登录接口 POST /api/login/account */

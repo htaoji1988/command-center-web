@@ -66,17 +66,33 @@
         icon: 'smile',
         component: './UserManage/Permissions',
       },
-      {
-        path: '/user_permission/testpage',
-        name: 'testPage',
-        icon: 'smile',
-        component: './UserManage',
-      },
+      // {
+      //   path: '/user_permission/testpage',
+      //   name: 'testPage',
+      //   icon: 'smile',
+      //   component: './UserManage',
+      // },
       {
         component: './404',
       },
     ],
   },
+
+  {
+    name: '配置中心',
+    icon: 'table',
+    path: '/setting',
+    routes: [
+      {
+        path: '/setting/splunk/',
+        name: 'splunk',
+        icon: 'smile',
+	component: './Setting/Splunk/',
+      },
+      ]
+
+  },
+
   {
     path: '/',
     redirect: '/welcome',
