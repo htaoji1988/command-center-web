@@ -8,7 +8,7 @@ import {rule} from "@/services/ant-design-pro/api";
 import {ModalForm, ProFormText, ProFormTextArea} from "@ant-design/pro-form";
 import UpdateForm from "@/pages/UserManage/components/UpdateForm";
 import ProDescriptions, {ProDescriptionsItemProps} from "@ant-design/pro-descriptions";
-import React, {useRef, useState} from "react";
+import React, {useRef, useState, useEffect} from "react";
 import request from 'umi-request';
 import axios from 'axios'
 import qs from 'qs'
@@ -24,7 +24,7 @@ message.config({  // 设置message通知的位置
 })
 
 type User = {
-  id: number;
+  id: number|string;
   username: string;
   email: string;
   is_active: boolean;
@@ -62,6 +62,7 @@ const select_roles = (roles: Record<string, role>): { label: string, value: stri
 
 const Users: React.FC = () => {
   const actionRef = useRef<ActionType>();
+
   const layout = {
     labelCol: {span: 5, offset: 1},
     wrapperCol: {span: 14, offset: 0}
@@ -72,13 +73,14 @@ const Users: React.FC = () => {
   const [formPassword, setFormPassword] = useState('')
   const [formMail, setFormMail] = useState('')
   const [formNickname, setFormNickname] = useState('')
-  const [formRole, setFormRole] = useState('')
+  const [formRole, setFormRole] = useState('GUEST')
   const [formStatus, setFormStatus] = useState('启用')
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [confirmLoading, setConfirmLoading] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
 
   const [form] = Form.useForm();
+
   form.setFieldsValue({
     id: formId,
     username: formUsername,
@@ -91,9 +93,12 @@ const Users: React.FC = () => {
 
   const addModel = () => {
     console.log("add model");
-    form.setFieldsValue({
-      nickname: "aaaaa"
-    })
+    setFormUsername('')
+    setFormPassword('')
+    setFormNickname('')
+    setFormMail('')
+    setFormRole('GUEST')
+    setFormStatus('启用')
     setIsEdit(false);
     setIsModalVisible(true);
   }
@@ -144,7 +149,7 @@ const Users: React.FC = () => {
     setIsModalVisible(false)
   }
 
-  const deleteRow = (id: number, action: ActionType) => {
+  const deleteRow = (id: number) => {
     console.log(id)
     request.post('/api/user/del_user', {
       header: {headers}, data: {id: id},
@@ -152,7 +157,7 @@ const Users: React.FC = () => {
       console.log(res)
       if (res.success === 'True') {
         message.success('操作成功')
-        action.reload()
+        actionRef.current.reload()
         // reloadTable(pageOption.page_no, pageOption.page_size)
       } else {
         message.error('操作失败')
@@ -162,7 +167,7 @@ const Users: React.FC = () => {
     });
   }
 
-  const editRow = (record) => {
+  const editRow = (record:any) => {
     console.log(record)
     setIsEdit(true)
     setIsModalVisible(true)
@@ -267,15 +272,15 @@ const Users: React.FC = () => {
       title: '操作',
       valueType: 'option',
       key: 'option',
-      render: (text, record, _, action) => (
+      render: (text, record, _, actionRef) => (
         <>
           <Tooltip title="编辑" key="cyan">
-            <Button type="link" size={'small'} icon={<FormOutlined/>} onClick={() => editRow(record, action)}/>
+            <Button type="link" size={'small'} icon={<FormOutlined/>} onClick={() => editRow(record)}/>
           </Tooltip>&nbsp;
           <Tooltip title="删除" key="red">
             <Popconfirm
               title="确认删除这条信息吗?"
-              onConfirm={() => deleteRow(record.id, action)}
+              onConfirm={() => deleteRow(record.id)}
               onCancel={() => cancelRrow(record.id)}
               okText="Yes"
               cancelText="No"
@@ -356,9 +361,9 @@ const Users: React.FC = () => {
           </Dropdown>,
         ]}
       />
-      <Modal title={isEdit ? "编辑用户信息" : "新增用户信息"} visible={isModalVisible} okText="确认" cancelText="取消"
-             onOk={isEdit ? editOK : addOK} confirmLoading={confirmLoading} onCancel={handleCancel}>
-        <Form {...layout} name="nest-messages" form={form}>
+      <Modal title={isEdit ? "编辑用户信息" : "新增用户信息"} open={isModalVisible} okText="确认" cancelText="取消"
+             onOk={isEdit ? editOK : addOK} confirmLoading={confirmLoading} onCancel={handleCancel} forceRender>
+        <Form {...layout} name="nest-messages" form={form} preserve={true}>
           <Form.Item name='id' label="ID" hidden={!isEdit} initialValue={formId} rules={[]} wrapperCol={{span: 5}}>
             <InputNumber readOnly={true}/>
           </Form.Item>
@@ -372,11 +377,11 @@ const Users: React.FC = () => {
           <Form.Item name='nickname' label="姓名(昵称)" rules={[{max: 255},]}>
             <Input onChange={(e) => setFormNickname(e.target.value)}/>
           </Form.Item>
-          <Form.Item name='mail' label="邮箱" rules={[{type: 'email', max: 255},]}>
+          <Form.Item name='email' label="邮箱" rules={[{type: 'email', max: 255},]}>
             <Input onChange={(e) => setFormMail(e.target.value)}/>
           </Form.Item>
           <Form.Item name='role' label="角色" rules={[{required: true},]}>
-            <Select defaultValue="" onChange={(e) => setFormRole(e)}
+            <Select onChange={(e) => setFormRole(e)}
                     options={select_roles(roles)}>
             </Select>
           </Form.Item>

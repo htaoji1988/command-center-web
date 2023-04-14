@@ -59,6 +59,7 @@ const Login: React.FC = () => {
         });
         localStorage.setItem('token', msg.token);
         localStorage.setItem('type', msg.type);
+        localStorage.setItem('role', msg.role);
         message.success(defaultLoginSuccessMessage);
         await fetchUserInfo();
         /** 此方法会跳转到 redirect 参数所在的位置 */

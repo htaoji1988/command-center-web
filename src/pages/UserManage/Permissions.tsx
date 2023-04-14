@@ -240,8 +240,8 @@ const Permissions: React.FC = () => {
           </Dropdown>,
         ]}
       />
-      <Modal title={isEdit ? "编辑权限" : "新增权限"} visible={isModalVisible} okText="确认" cancelText="取消"
-             onOk={isEdit ? editOK : addOK} confirmLoading={confirmLoading} onCancel={handleCancel}>
+      <Modal title={isEdit ? "编辑权限" : "新增权限"} open={isModalVisible} okText="确认" cancelText="取消"
+             onOk={isEdit ? editOK : addOK} confirmLoading={confirmLoading} onCancel={handleCancel} forceRender>
         <Form {...layout} name="nest-messages" form={form}>
           <Form.Item name='id' label="ID" hidden={!isEdit} initialValue={formId} rules={[]} wrapperCol={{span: 5}}>
             <InputNumber readOnly={true}/>

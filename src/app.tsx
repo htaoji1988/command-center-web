@@ -91,17 +91,18 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
         <>
           {children}
           {!props.location?.pathname?.includes('/login') && (
-            <SettingDrawer
-              disableUrlParams
-              enableDarkTheme
-              settings={initialState?.settings}
-              onSettingChange={(settings) => {
-                setInitialState((preInitialState) => ({
-                  ...preInitialState,
-                  settings,
-                }));
-              }}
-            />
+            <></>
+            // <SettingDrawer
+            //   disableUrlParams
+            //   enableDarkTheme
+            //   settings={initialState?.settings}
+            //   onSettingChange={(settings) => {
+            //     setInitialState((preInitialState) => ({
+            //       ...preInitialState,
+            //       settings,
+            //     }));
+            //   }}
+            // />
           )}
         </>
       );
@@ -127,9 +128,9 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
 const responseInterceptors = async (response: any, options: any): any => {
   const data = await response.clone().json()
   if (data.code == 4000) {
-    notification.error({
-      message: `错误码: ${data.code}`,
-      description: "登录异常或者失效!" + data.message,
+    notification.warn({
+      message: `返回码: ${data.code}`,
+      description: "登录异常或者失效!\n" + data.message,
     });
     history.push('/user/login')
   }

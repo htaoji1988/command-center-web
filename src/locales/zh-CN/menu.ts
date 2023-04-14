@@ -54,5 +54,6 @@ export default {
   'menu.editor.mind': '脑图编辑器',
   'menu.editor.koni': '拓扑编辑器',
   'menu.userPermission': '用户&权限',
-  'menu.配置中心': '配置中心',
+  'menu.configCenter': '配置中心',
+  'menu.configCenter.splunk': 'splunk',
 };

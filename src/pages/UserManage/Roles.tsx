@@ -219,8 +219,8 @@ const Roles: React.FC = () => {
           </Dropdown>,
         ]}
       />
-      <Modal title="新增角色" visible={isModalVisible} okText="确认" cancelText="取消"
-             onOk={addOK} confirmLoading={confirmLoading} onCancel={handleCancel}>
+      <Modal title="新增角色" open={isModalVisible} okText="确认" cancelText="取消" forceRender
+             onOk={addOK} confirmLoading={confirmLoading} onCancel={handleCancel} >
         <Form {...layout} name="nest-messages" form={form}>
           <Form.Item name='id' label="ID" hidden={!isEdit} initialValue={formId} rules={[]} wrapperCol={{span: 5}}>
             <InputNumber readOnly={true}/>
